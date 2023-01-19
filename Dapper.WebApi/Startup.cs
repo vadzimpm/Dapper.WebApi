@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Dapper.Infrastructure;
+using Dapper.WebApi.Extensions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
@@ -12,14 +13,18 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
+using ILogger = Microsoft.Extensions.Logging.ILogger;
 
 namespace Dapper.WebApi
 {
     public class Startup
     {
-        public Startup(IConfiguration configuration)
+        private readonly IWebHostEnvironment CurrentEnvironment;
+
+        public Startup(IConfiguration configuration, IWebHostEnvironment env)
         {
             Configuration = configuration;
+            CurrentEnvironment = env;
         }
 
         public IConfiguration Configuration { get; }
@@ -29,6 +34,12 @@ namespace Dapper.WebApi
         {
             services.AddInfrastructure();
             services.AddControllers();
+            services.AddLogging(config =>
+            {
+                config.AddDebug();
+                config.AddConsole();
+                //etc
+            });
             services.AddSwaggerGen(c =>
             {
                 c.IncludeXmlComments(string.Format(@"{0}\Dapper.WebApi.xml", System.AppDomain.CurrentDomain.BaseDirectory));
@@ -41,18 +52,23 @@ namespace Dapper.WebApi
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILogger logger)
         {
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
             }
 
+            logger.LogInformation($"Current environment: {CurrentEnvironment}");
+
+            app.ConfigureExceptionHandler(logger);
+
             app.UseHttpsRedirection();
 
             app.UseRouting();
 
             app.UseAuthorization();
+
             #region Swagger
             // Enable middleware to serve generated Swagger as a JSON endpoint.
             app.UseSwagger();
@@ -63,6 +79,7 @@ namespace Dapper.WebApi
                 c.SwaggerEndpoint("/swagger/v1/swagger.json", "CleanArchitecture.WebApi");
             });
             #endregion
+
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
