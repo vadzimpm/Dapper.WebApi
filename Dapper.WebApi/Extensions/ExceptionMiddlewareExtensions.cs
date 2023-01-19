@@ -1,4 +1,5 @@
 ﻿using System.Net;
+using Dapper.WebApi.CustomExceptionMiddleware;
 using Dapper.WebApi.Models;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics;
@@ -29,6 +30,11 @@ namespace Dapper.WebApi.Extensions
                     }
                 });
             });
+        }
+
+        public static void ConfigureCustomExceptionMiddleware(this IApplicationBuilder app)
+        {
+            app.UseMiddleware<ExceptionMiddleware>();
         }
     }
 }

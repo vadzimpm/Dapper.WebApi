@@ -62,6 +62,7 @@ namespace Dapper.WebApi
             logger.LogInformation($"Current environment: {CurrentEnvironment}");
 
             app.ConfigureExceptionHandler(logger);
+            //app.ConfigureCustomExceptionMiddleware();
 
             app.UseHttpsRedirection();
 
